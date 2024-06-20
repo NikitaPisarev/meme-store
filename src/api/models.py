@@ -20,6 +20,19 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    memes: Mapped[list["Meme"]] = relationship(back_populates="owner")
+
+
+class Meme(Base):
+    __tablename__ = "meme"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    description: Mapped[str] = mapped_column(String(512), nullable=True)
+    image_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    visibility: Mapped[bool] = mapped_column(Boolean, default=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("user.user_id", ondelete="SET NULL"))
+
+    owner: Mapped["User"] = relationship(back_populates="memes")
 
 
 class RefreshToken(Base):

@@ -7,16 +7,16 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import get_settings
-from core.security.jwt import create_jwt_token
-from core.security.password import (
+from src.config import get_settings
+from src.core.security.jwt import create_jwt_token
+from src.core.security.password import (
     DUMMY_PASSWORD,
     get_password_hash,
     verify_password,
 )
-from api.models import RefreshToken, User
-from api.schemas.requests import RefreshTokenRequest, UserCreateRequest
-from api.schemas.responses import AccessTokenResponse, UserResponse
+from src.api.models import RefreshToken, User
+from src.api.schemas.requests import RefreshTokenRequest, UserCreateRequest
+from src.api.schemas.responses import AccessTokenResponse, UserResponse
 from . import api_messages, api_utils
 
 router = APIRouter()

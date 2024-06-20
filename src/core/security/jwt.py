@@ -4,7 +4,7 @@ import jwt
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 
-from config import get_settings
+from src.config import get_settings
 
 JWT_ALGORITHM = "HS256"
 

@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security.password import get_password_hash
-from api.models import User
-from api.schemas.requests import UserUpdatePasswordRequest
-from api.schemas.responses import UserResponse
+from src.core.security.password import get_password_hash
+from src.api.models import User
+from src.api.schemas.requests import UserUpdatePasswordRequest
+from src.api.schemas.responses import UserResponse
 from . import api_utils
 
 router = APIRouter()

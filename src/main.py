@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from api.endpoints.api_router import api_router, auth_router
-from config import get_settings
+from .api.endpoints.api_router import api_router, auth_router
+from .config import get_settings
 
 app = FastAPI(
     title="meme-store",
@@ -25,9 +24,4 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=get_settings().security.allowed_hosts,
 )

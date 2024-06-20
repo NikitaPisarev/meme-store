@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api.endpoints.api_router import api_router, auth_router
+from .api.endpoints.api_router import users_router, auth_router, meme_router
 from .config import get_settings
 
 app = FastAPI(
@@ -13,7 +13,9 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
-app.include_router(api_router)
+app.include_router(users_router)
+app.include_router(meme_router)
+
 
 app.add_middleware(
     CORSMiddleware,

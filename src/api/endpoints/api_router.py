@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
-from . import api_messages, auth, users
+from . import api_messages, auth, users, memes
 
 
 auth_router = APIRouter()
 auth_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
-api_router = APIRouter(
+users_router = APIRouter(
     responses={
         401: {
             "description": "No `Authorization` access token header, token is invalid or user removed",
@@ -31,4 +31,7 @@ api_router = APIRouter(
         },
     }
 )
-api_router.include_router(users.router, prefix="/users", tags=["users"])
+users_router.include_router(users.router, prefix="/users", tags=["users"])
+
+meme_router = APIRouter()
+meme_router.include_router(memes.router, tags=["memes"])

@@ -1,5 +1,14 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from src.api.models import User, Meme
@@ -23,7 +32,9 @@ async def get_public_memes_of_user(
 ) -> list[MemeResponse]:
     user = await session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
 
     offset = (page - 1) * page_size
     result = await session.execute(
@@ -37,13 +48,15 @@ async def get_public_memes_of_user(
     response = []
     for meme in memes:
         presigned_url = await get_image_url(meme.image_url)
-        response.append(MemeResponse(
-            id=meme.id,
-            description=meme.description,
-            image_url=presigned_url,
-            visibility=meme.visibility,
-            owner_id=meme.owner_id
-        ))
+        response.append(
+            MemeResponse(
+                id=meme.id,
+                description=meme.description,
+                image_url=presigned_url,
+                visibility=meme.visibility,
+                owner_id=meme.owner_id,
+            )
+        )
 
     return response
 
@@ -60,10 +73,14 @@ async def get_specific_public_meme(
 ) -> MemeResponse:
     user = await session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
 
     result = await session.execute(
-        select(Meme).where(Meme.id == meme_id, Meme.owner_id == user_id, Meme.visibility.is_(True))
+        select(Meme).where(
+            Meme.id == meme_id, Meme.owner_id == user_id, Meme.visibility.is_(True)
+        )
     )
     meme = result.scalars().first()
     if meme is None:
@@ -95,13 +112,15 @@ async def get_all_memes_of_current_user(
     response = []
     for meme in memes:
         presigned_url = await get_image_url(meme.image_url)
-        response.append(MemeResponse(
-            id=meme.id,
-            description=meme.description,
-            image_url=presigned_url,
-            visibility=meme.visibility,
-            owner_id=meme.owner_id
-        ))
+        response.append(
+            MemeResponse(
+                id=meme.id,
+                description=meme.description,
+                image_url=presigned_url,
+                visibility=meme.visibility,
+                owner_id=meme.owner_id,
+            )
+        )
 
     return response
 
@@ -138,7 +157,7 @@ async def add_meme(
     visibility: bool = Form(...),
     image: UploadFile = File(...),
     session: AsyncSession = Depends(api_utils.get_session),
-    current_user: User = Depends(api_utils.get_current_user)
+    current_user: User = Depends(api_utils.get_current_user),
 ) -> MemeResponse:
     image_path = await upload_image(image)
 
@@ -146,7 +165,7 @@ async def add_meme(
         description=description,
         image_url=image_path,
         visibility=visibility,
-        owner_id=current_user.user_id
+        owner_id=current_user.user_id,
     )
 
     session.add(new_meme)
@@ -159,7 +178,7 @@ async def add_meme(
 async def delete_meme(
     meme_id: int,
     current_user: User = Depends(api_utils.get_current_user),
-    session: AsyncSession = Depends(api_utils.get_session)
+    session: AsyncSession = Depends(api_utils.get_session),
 ) -> None:
     result = await session.execute(
         select(Meme).where(Meme.id == meme_id, Meme.owner_id == current_user.user_id)
@@ -172,7 +191,7 @@ async def delete_meme(
             detail="Meme not found or you do not have permission to delete it.",
         )
 
-    await delete_image(meme.image_url.split('/')[-1])
+    await delete_image(meme.image_url.split("/")[-1])
     await session.delete(meme)
     await session.commit()
 
@@ -184,7 +203,7 @@ async def update_meme(
     visibility: bool = Form(...),
     image: Optional[UploadFile] = File(...),
     current_user: User = Depends(api_utils.get_current_user),
-    session: AsyncSession = Depends(api_utils.get_session)
+    session: AsyncSession = Depends(api_utils.get_session),
 ) -> MemeResponse:
     result = await session.execute(
         select(Meme).where(Meme.id == meme_id, Meme.owner_id == current_user.user_id)
@@ -194,11 +213,11 @@ async def update_meme(
     if not meme:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Meme not found or you do not have permission to edit it."
+            detail="Meme not found or you do not have permission to edit it.",
         )
 
     if image:
-        old_image_path = meme.image_url.split('/')[-1]
+        old_image_path = meme.image_url.split("/")[-1]
         await delete_image(old_image_path)
         new_image_path = await upload_image(image)
         meme.image_url = new_image_path

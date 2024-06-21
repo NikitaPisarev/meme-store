@@ -16,7 +16,7 @@ async def create_minio_client() -> ClientCreatorContext:
         region_name="us-east-1",
         aws_access_key_id=settings.minio.access_key_id,
         aws_secret_access_key=settings.minio.secret_access_key.get_secret_value(),
-        use_ssl=False
+        use_ssl=False,
     )
 
 
@@ -28,23 +28,34 @@ async def ensure_bucket_exists(client: ClientCreatorContext, bucket_name: str) -
         if error_code == "BucketAlreadyOwnedByYou":
             pass
         elif error_code == "BucketAlreadyExists":
-            raise HTTPException(status_code=409, detail="Bucket name already in use by another account.")
+            raise HTTPException(
+                status_code=409, detail="Bucket name already in use by another account."
+            )
         else:
             print(f"Error checking/creating bucket: {e}")
-            raise HTTPException(status_code=500, detail="Error checking/creating bucket.")
+            raise HTTPException(
+                status_code=500, detail="Error checking/creating bucket."
+            )
     except Exception as e:
         print(f"Unexpected error when checking/creating bucket: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected error checking/creating bucket.")
+        raise HTTPException(
+            status_code=500, detail="Unexpected error checking/creating bucket."
+        )
 
 
-async def get_image_url(file_path: str, bucket_name: str = get_settings().minio.bucket_name, expires: int = 900) -> str:
+async def get_image_url(
+    file_path: str,
+    bucket_name: str = get_settings().minio.bucket_name,
+    expires: int = 900,
+) -> str:
     client = await create_minio_client()
     try:
         async with client as minio:
             presigned_url = await minio.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": bucket_name, "Key": file_path},
-                ExpiresIn=expires)
+                ExpiresIn=expires,
+            )
         return presigned_url
     except S3Error as e:
         print(f"Error getting image URL: {e}")
@@ -63,7 +74,7 @@ async def upload_image(file: UploadFile) -> str:
                 Bucket=bucket_name,
                 Key=file_path,
                 Body=file.file.read(),
-                ContentType=file.content_type
+                ContentType=file.content_type,
             )
         return file_path
     except S3Error as e:
@@ -75,7 +86,9 @@ async def delete_image(file_path: str) -> None:
     try:
         client = await create_minio_client()
         async with client as minio:
-            await minio.delete_object(Bucket=get_settings().minio.bucket_name, Key=file_path)
+            await minio.delete_object(
+                Bucket=get_settings().minio.bucket_name, Key=file_path
+            )
     except S3Error as e:
         print(f"Failed to delete image from MINIO: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete image")

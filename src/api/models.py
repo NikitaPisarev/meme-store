@@ -30,7 +30,9 @@ class Meme(Base):
     description: Mapped[str] = mapped_column(String(512), nullable=True)
     image_url: Mapped[str] = mapped_column(String(512), nullable=False)
     visibility: Mapped[bool] = mapped_column(Boolean, default=True)
-    owner_id: Mapped[str] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey("user.user_id", ondelete="CASCADE")
+    )
 
     owner: Mapped["User"] = relationship(back_populates="memes")
 

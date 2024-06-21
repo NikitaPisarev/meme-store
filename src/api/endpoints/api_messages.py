@@ -11,9 +11,7 @@ EMAIL_ADDRESS_ALREADY_USED = "Cannot use this email address."
 ACCESS_TOKEN_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {
         "description": "Invalid email or password",
-        "content": {
-            "application/json": {"example": {"detail": PASSWORD_INVALID}}
-        },
+        "content": {"application/json": {"example": {"detail": PASSWORD_INVALID}}},
     },
 }
 
@@ -39,9 +37,7 @@ REFRESH_TOKEN_RESPONSES: dict[int | str, dict[str, Any]] = {
     404: {
         "description": "Refresh token does not exist.",
         "content": {
-            "application/json": {
-                "example": {"detail": REFRESH_TOKEN_NOT_FOUND}
-            }
+            "application/json": {"example": {"detail": REFRESH_TOKEN_NOT_FOUND}}
         },
     },
 }

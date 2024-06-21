@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, HttpUrl
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class BaseResponse(BaseModel):
@@ -21,6 +21,6 @@ class UserResponse(BaseResponse):
 class MemeResponse(BaseResponse):
     id: int
     description: str
-    image_url: HttpUrl
+    image_url: str
     visibility: bool
     owner_id: str

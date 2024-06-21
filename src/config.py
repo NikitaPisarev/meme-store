@@ -1,11 +1,17 @@
 from functools import lru_cache
 from pathlib import Path
-
 from pydantic import AnyHttpUrl, BaseModel, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine.url import URL
 
 PROJECT_DIR = Path(__file__).parent.parent
+
+
+class Minio(BaseModel):
+    endpoint_url: AnyHttpUrl
+    access_key_id: str
+    secret_access_key: SecretStr
+    bucket_name: str
 
 
 class Security(BaseModel):
@@ -29,6 +35,7 @@ class Database(BaseModel):
 class Settings(BaseSettings):
     security: Security
     database: Database
+    minio: Minio
 
     @computed_field
     @property

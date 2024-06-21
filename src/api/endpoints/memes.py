@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Optional
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from src.api.models import User, Meme
 from src.api.schemas.responses import MemeResponse
-from src.api.schemas.requests import MemeCreateRequest, MemeUpdateRequest
 from src.api.endpoints import api_utils
+from src.core.s3 import get_image_url, upload_image, delete_image
 
 router = APIRouter()
 
@@ -32,7 +33,19 @@ async def get_public_memes_of_user(
         .limit(page_size)
     )
     memes = result.scalars().all()
-    return [MemeResponse.model_validate(meme) for meme in memes]
+
+    response = []
+    for meme in memes:
+        presigned_url = await get_image_url(meme.image_url)
+        response.append(MemeResponse(
+            id=meme.id,
+            description=meme.description,
+            image_url=presigned_url,
+            visibility=meme.visibility,
+            owner_id=meme.owner_id
+        ))
+
+    return response
 
 
 @router.get(
@@ -55,6 +68,7 @@ async def get_specific_public_meme(
     meme = result.scalars().first()
     if meme is None:
         raise HTTPException(status_code=404, detail="Meme not found or not public.")
+    meme.image_url = await get_image_url(meme.image_url)
     return meme
 
 
@@ -77,7 +91,19 @@ async def get_all_memes_of_current_user(
         .limit(page_size)
     )
     memes = result.scalars().all()
-    return memes
+
+    response = []
+    for meme in memes:
+        presigned_url = await get_image_url(meme.image_url)
+        response.append(MemeResponse(
+            id=meme.id,
+            description=meme.description,
+            image_url=presigned_url,
+            visibility=meme.visibility,
+            owner_id=meme.owner_id
+        ))
+
+    return response
 
 
 @router.get(
@@ -96,6 +122,9 @@ async def get_specific_meme_of_current_user(
     meme = result.scalars().first()
     if meme is None:
         raise HTTPException(status_code=404, detail="Meme not found.")
+
+    meme.image_url = await get_image_url(meme.image_url)
+
     return meme
 
 
@@ -105,16 +134,21 @@ async def get_specific_meme_of_current_user(
     status_code=status.HTTP_201_CREATED,
 )
 async def add_meme(
-    meme_data: MemeCreateRequest,
+    description: str = Form(...),
+    visibility: bool = Form(...),
+    image: UploadFile = File(...),
     session: AsyncSession = Depends(api_utils.get_session),
     current_user: User = Depends(api_utils.get_current_user)
 ) -> MemeResponse:
+    image_path = await upload_image(image)
+
     new_meme = Meme(
-        description=meme_data.description,
-        image_url=str(meme_data.image_url),
-        visibility=meme_data.visibility,
+        description=description,
+        image_url=image_path,
+        visibility=visibility,
         owner_id=current_user.user_id
     )
+
     session.add(new_meme)
     await session.commit()
     await session.refresh(new_meme)
@@ -138,6 +172,7 @@ async def delete_meme(
             detail="Meme not found or you do not have permission to delete it.",
         )
 
+    await delete_image(meme.image_url.split('/')[-1])
     await session.delete(meme)
     await session.commit()
 
@@ -145,7 +180,9 @@ async def delete_meme(
 @router.put("/me/memes/{meme_id}", response_model=MemeResponse)
 async def update_meme(
     meme_id: int,
-    meme_data: MemeUpdateRequest,
+    description: str = Form(...),
+    visibility: bool = Form(...),
+    image: Optional[UploadFile] = File(...),
     current_user: User = Depends(api_utils.get_current_user),
     session: AsyncSession = Depends(api_utils.get_session)
 ) -> MemeResponse:
@@ -160,9 +197,16 @@ async def update_meme(
             detail="Meme not found or you do not have permission to edit it."
         )
 
-    for var, value in vars(meme_data).items():
-        if value is not None:
-            setattr(meme, var, value)
+    if image:
+        old_image_path = meme.image_url.split('/')[-1]
+        await delete_image(old_image_path)
+        new_image_path = await upload_image(image)
+        meme.image_url = new_image_path
+
+    if description:
+        meme.description = description
+    if visibility:
+        meme.visibility = visibility
 
     session.add(meme)
     await session.commit()

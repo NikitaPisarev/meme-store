@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic import BaseModel, EmailStr
 
 
 class BaseRequest(BaseModel):
@@ -20,7 +20,6 @@ class UserCreateRequest(BaseRequest):
 
 class MemeCreateRequest(BaseRequest):
     description: str
-    image_url: HttpUrl
     visibility: bool
 
 
